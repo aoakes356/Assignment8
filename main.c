@@ -2,21 +2,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 char** loadFile(char* name, int* count);
 
 char* getWord(FILE* stream);
 
 int main(){
-    setSortThreads(10);
+    setSortThreads(2);
     int count = 0;
     char** words = loadFile("poem.txt", &count);
-    printf("Loaded in words\n");
-    printf("Unsorted\n");
+    clock_t start, end;
+    start = clock();
+    sortThreaded(words,count);
+    end = clock();
     for(int i = 0; i < count-1; i++){
         printf("%s\n",words[i]); 
+        free(words[i]);
     }
-    sortThreaded(words,count);
+    printf("Time elapsed: %f\n",((double)(end-start))/CLOCKS_PER_SEC);
+    free(words);
 }
 
 char* getWord(FILE* stream){

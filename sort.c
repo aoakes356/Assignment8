@@ -6,7 +6,7 @@
 #include <errno.h>
 
 #define SORT_THRESHOLD      40
-
+#define THREAD_THRESHOLD 20000
 typedef struct _sortParams {
     char** array;
     int left;
@@ -51,7 +51,8 @@ static void *quickSort(void* p) {
     int i = left, j = right;
     pthread_t thread1, thread2;    
     int t1=0,t2=0;	
-    if (j - i > SORT_THRESHOLD) {           /* if the sort range is substantial, use quick sort */
+    int diff = j-i;
+    if (diff > SORT_THRESHOLD) {           /* if the sort range is substantial, use quick sort */
 
         int m = (i + j) >> 1;               /* pick pivot as median of         */
         char* temp, *pivot;                 /* first, last and middle elements */
@@ -80,7 +81,7 @@ static void *quickSort(void* p) {
 	
 
         SortParams first;  first.array = array; first.left = left; first.right = j;
-        if(maximumThreads <= 0){
+        if(maximumThreads <= 0 || j-left < THREAD_THRESHOLD){
             quickSort(&first);                  /* sort the left partition	*/
         }else{
             if(pthread_create(&thread1,NULL,&quickSort,(void*)(&first)) != 0){
@@ -94,7 +95,7 @@ static void *quickSort(void* p) {
         }
 		
         SortParams second; second.array = array; second.left = i; second.right = right;
-        if(maximumThreads <= 0){
+        if(maximumThreads <= 0 || right-i < THREAD_THRESHOLD ){
             quickSort(&second);        /* sort the right partition */
         }else{
             if(pthread_create(&thread2,NULL,&quickSort,(void*)(&second)) != 0) {
