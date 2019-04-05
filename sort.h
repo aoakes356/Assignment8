@@ -10,4 +10,5 @@ void setSortThreads(int maxThreads);
 /* string pointers (char*)                                         */
 
 void sortThreaded(char** array, unsigned int count);
+void sortNotThreaded(char** array, unsigned int count);
 

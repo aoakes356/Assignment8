@@ -39,6 +39,48 @@ int errorHandler(char* message){ // Just a convenient method to have.
     return -1;
 }
 
+static void quickSortNoT(void* p) {
+    SortParams* params = (SortParams*) p;
+    char** array = params->array;
+    int left = params->left;
+    int right = params->right;
+    int i = left, j = right;
+
+    if (j - i > SORT_THRESHOLD) {           /* if the sort range is substantial, use quick sort */
+
+        int m = (i + j) >> 1;               /* pick pivot as median of         */
+        char* temp, *pivot;                 /* first, last and middle elements */
+        if (strcmp(array[i],array[m]) > 0) {
+            temp = array[i]; array[i] = array[m]; array[m] = temp;
+        }
+        if (strcmp(array[m],array[j]) > 0) {
+            temp = array[m]; array[m] = array[j]; array[j] = temp;
+            if (strcmp(array[i],array[m]) > 0) {
+                temp = array[i]; array[i] = array[m]; array[m] = temp;
+            }
+        }
+        pivot = array[m];
+
+        for (;;) {
+            while (strcmp(array[i],pivot) < 0) i++; /* move i down to first element greater than or equal to pivot */
+            while (strcmp(array[j],pivot) > 0) j--; /* move j up to first element less than or equal to pivot      */
+            if (i < j) {
+                char* temp = array[i];      /* if i and j have not passed each other */
+                array[i++] = array[j];      /* swap their respective elements and    */
+                array[j--] = temp;          /* advance both i and j                  */
+            } else if (i == j) {
+                i++; j--;
+            } else break;                   /* if i > j, this partitioning is done  */
+        }
+
+        SortParams first;  first.array = array; first.left = left; first.right = j;
+        quickSortNoT(&first);                  /* sort the left partition	*/
+
+        SortParams second; second.array = array; second.left = i; second.right = right;
+        quickSortNoT(&second);                 /* sort the right partition */
+
+    } else insertSort(array,i,j);           /* for a small range use insert sort */
+}
 
 /* Recursive quick sort, but with a provision to use */
 /* insert sort when the range gets small.            */
@@ -84,39 +126,20 @@ static void *quickSort(void* p) {
         if(maximumThreads <= 0 || j-left < THREAD_THRESHOLD){
             quickSort(&first);                  /* sort the left partition	*/
         }else{
+            pthread_mutex_lock(&mutex);
             if(pthread_create(&thread1,NULL,&quickSort,(void*)(&first)) != 0){
                 errorHandler("Failed to create thread");
                 return NULL;
             }
             t1 = 1;
-            pthread_mutex_lock(&mutex);
             maximumThreads--;
             pthread_mutex_unlock(&mutex);
         }
-		
         SortParams second; second.array = array; second.left = i; second.right = right;
-        if(maximumThreads <= 0 || right-i < THREAD_THRESHOLD ){
-            quickSort(&second);        /* sort the right partition */
-        }else{
-            if(pthread_create(&thread2,NULL,&quickSort,(void*)(&second)) != 0) {
-                errorHandler("Failed to create thread");
-                return NULL;
-            }
-            t2 = 1;
-            pthread_mutex_lock(&mutex);
-            maximumThreads--;
-            pthread_mutex_unlock(&mutex);
-        }
-				
+        quickSort(&second);        /* sort the right partition */
     } else insertSort(array,i,j);           /* for a small range use insert sort */
     if(t1){
         pthread_join(thread1,NULL);
-        pthread_mutex_lock(&mutex);
-        maximumThreads++;
-        pthread_mutex_unlock(&mutex);
-    }
-    if(t2){
-        pthread_join(thread2,NULL);
         pthread_mutex_lock(&mutex);
         maximumThreads++;
         pthread_mutex_unlock(&mutex);
@@ -138,5 +161,10 @@ void sortThreaded(char** array, unsigned int count) {
     SortParams parameters;
     parameters.array = array; parameters.left = 0; parameters.right = count - 1;
     quickSort(&parameters);
+}
+void sortNotThreaded(char** array, unsigned int count) {
+    SortParams parameters;
+    parameters.array = array; parameters.left = 0; parameters.right = count - 1;
+    quickSortNoT(&parameters);
 }
 

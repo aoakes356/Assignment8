@@ -3,24 +3,34 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
+#include <string.h>
 
 char** loadFile(char* name, int* count);
 
 char* getWord(FILE* stream);
 
 int main(){
-    setSortThreads(2);
+    setSortThreads(100);
     int count = 0;
     char** words = loadFile("poem.txt", &count);
+    char** wordscpy = malloc(sizeof(char*)*count);
+    memcpy(wordscpy,words,count*sizeof(char*));
     clock_t start, end;
     start = clock();
     sortThreaded(words,count);
     end = clock();
+    printf("Time elapsed with threads: %f\n",((double)(end-start))/CLOCKS_PER_SEC);
+    start = clock();
+    sortNotThreaded(wordscpy,count);
+    end = clock();
     for(int i = 0; i < count-1; i++){
-        printf("%s\n",words[i]); 
+        //printf("%s\n",words[i]);
+        if(words[i] != wordscpy[i]){
+            printf("AHHHHHHHHHHHHHHH");
+        }
         free(words[i]);
     }
-    printf("Time elapsed: %f\n",((double)(end-start))/CLOCKS_PER_SEC);
+    printf("Time elapsed no threads: %f\n",((double)(end-start))/CLOCKS_PER_SEC);
     free(words);
 }
 
