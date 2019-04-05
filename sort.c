@@ -6,7 +6,7 @@
 #include <errno.h>
 
 #define SORT_THRESHOLD      40
-#define THREAD_THRESHOLD 20000
+#define THREAD_THRESHOLD 10000
 typedef struct _sortParams {
     char** array;
     int left;

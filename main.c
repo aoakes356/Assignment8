@@ -10,7 +10,7 @@ char** loadFile(char* name, int* count);
 char* getWord(FILE* stream);
 
 int main(){
-    setSortThreads(100);
+    setSortThreads(2);
     int count = 0;
     char** words = loadFile("poem.txt", &count);
     char** wordscpy = malloc(sizeof(char*)*count);
